@@ -1,0 +1,123 @@
+//布局
+.scroll-bar {
+  &::-webkit-scrollbar {
+    /*滚动条整体样式*/
+    width: 6px;
+    /*高宽分别对应横竖滚动条的尺寸*/
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    /*滚动条里面小方块*/
+    border-radius: 10px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    background: rgb(195, 206, 213);
+  }
+
+  &::-webkit-scrollbar-track {
+    /*滚动条里面轨道*/
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    background: rgba(1, 169, 154, 0);
+  }
+}
+
+.scroll-auto {
+  height: 100%;
+  overflow: auto;
+  .scroll-bar();
+}
+
+.oneLineEsp {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ant-layout-content.content-wrap>div {
+  height: 100%;
+  overflow: hidden;
+
+  .tab-pane {
+    .scroll-auto();
+  }
+}
+
+
+
+//头部滚动条问题
+.ant-table-header {
+  scrollbar-color: transparent transparent
+}
+
+.ant-table-header::-webkit-scrollbar {
+  background-color: transparent
+}
+
+.ant-table-body {
+  overflow: auto !important;
+}
+
+.ant-table-body,
+.ant-table-body-inner {
+  .scroll-bar()
+}
+
+// table fixed定位
+.ant-table-fixed-right {
+  bottom: 6px;
+}
+
+
+
+.ant-tabs-nav-scroll {
+  text-align: left;
+}
+
+//tab样式
+.ant-tabs>.ant-tabs-bar {
+  margin-bottom: 0;
+}
+
+.ant-tabs.ant-tabs-card.link-tab .ant-tabs-card-bar .ant-tabs-tab {
+  padding: 0;
+
+  .tab-link {
+    padding: 0 16px;
+    display: block;
+    height: 100%;
+  }
+}
+
+//antd table
+.ant-table-tbody {
+  overflow: auto !important;
+
+  &>tr>td {
+    // word-break: break-word;
+
+    .ant-btn-link {
+      padding: 0 3px;
+    }
+
+    .table-div {
+      overflow: auto;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      &>div {
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+//菜单栏
+.sideMenuBox .ant-layout-sider-children{
+  overflow-x:hidden;
+  overflow-y:auto;
+  text-align: left;
+  .scroll-bar()
+}

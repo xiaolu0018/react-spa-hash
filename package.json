@@ -1,0 +1,57 @@
+{
+  "name": "react-route-test",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@loadable/component": "^5.10.1",
+    "antd": "3.26.3",
+    "axios": "^0.19.0",
+    "babel-plugin-import": "^1.12.0",
+    "json-bigint": "^0.3.0",
+    "moment": "^2.24.0",
+    "rc-dialog": "7.5.7",
+    "react": "^16.8.6",
+    "react-csv": "^1.1.1",
+    "react-dom": "^16.8.6",
+    "react-hot-loader": "^4.9.0",
+    "react-redux": "^7.1.0",
+    "react-router-dom": "^5.0.1",
+    "react-scripts": "3.0.1",
+    "redux": "^4.0.4"
+  },
+  "scripts": {
+    "start": "react-app-rewired start --watch-all",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-scripts eject",
+    "mock": "mocker ./data/data.js",
+    "mockdev": "concurrently \"yarn run mock\"  \"yarn run start\"",
+    "ngx": "yarn run build && node file-copy.js"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-decorators": "^7.4.4",
+    "concurrently": "^4.1.0",
+    "customize-cra": "^0.9.1",
+    "less": "^3.9.0",
+    "less-loader": "^5.0.0",
+    "mocker-api": "^1.7.6",
+    "mockjs": "^1.0.1-beta3",
+    "react-app-rewired": "^2.1.3"
+  }
+}

@@ -1,0 +1,5 @@
+export default {
+  SETMENU:'SETMENU',//MENUID
+  SETTAP:'SETTAP',//TAPID
+  CLEARMENU:'CLEARMENU'
+}
