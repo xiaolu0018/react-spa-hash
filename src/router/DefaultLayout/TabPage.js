@@ -10,7 +10,7 @@ import AuthRoute from '@/components/AuthRoute.js'
 
 import tabRoute from './tabRoute.js'
 
-@connect(state => ({ menuId: state.menu.menuId }),{setTap})
+@connect(state => ({ menuId: state.menu.menuId }), { setTap })
 class TabPage extends PureComponent {
   constructor(props) {
     super(props)
@@ -24,9 +24,24 @@ class TabPage extends PureComponent {
     this.init()
   }
   componentDidUpdate(prevProps, prevState) {
-   if(prevProps.menuId !== this.props.menuId && this.props.menuId){
-     this.init()
-   }
+    if (prevProps.menuId !== this.props.menuId && this.props.menuId) {
+      this.init()
+    } else if (this.props.com && this.props.com === prevProps.com && prevProps.location.pathname !== this.props.location.pathname) {
+      let tabPath = '/pages/' + this.props.com + '/';
+      if (this.props.location.pathname.includes(tabPath) && prevProps.location.pathname.includes(tabPath)) {
+        //tab路由跳转切换
+        let tabList = this.props.tabList;
+        let path = this.props.history.location.pathname;
+        let tab = tabList.find(item => path && item.url === path);
+        if (tab) {
+          this.props.setTap(tab.tapId.toString());
+          this.setState({
+            actTab: tab.tapId.toString(),
+            actUrl: tab.url
+          })
+        }
+      }
+    }
   }
   componentWillUnmount() {
     this.setState = () => { }
@@ -107,7 +122,7 @@ class TabPage extends PureComponent {
                 let pathname = props.location.pathname;
                 let regs = new RegExp('\\/pages\\/' + this.props.com + '\\/(\\w*)');
                 let menuId = this.props.menuId;
-                let menu = this.props.list.filter(item => +item.menuId === +menuId && pathname.includes(item.url) )
+                let menu = this.props.list.filter(item => +item.menuId === +menuId && pathname.includes(item.url))
                 if (pathname && (regs.test(pathname)) && RegExp.$1 && this.props.tabList && this.props.tabList.length && +this.props.tabList[0].menuId === +this.props.menuId && menu.length) {
                   return (
                     <Switch>
