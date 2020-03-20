@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { connect } from 'react-redux'
 import HeadNav from '@/common/HeadNav'
 import SideNav from '@/common/SideNav'
 import { Modal, Layout, Spin } from 'antd'
@@ -13,37 +12,33 @@ const TabPage = loadable(() => import('./TabPage.js'))
 const { Header, Sider, Content } = Layout
 const menuIcons = []
 
-@connect(state => ({ menuId: state.menu.menuId }), null)
-class DefaultLayout extends Component {
+export default class DefaultLayout extends Component {
   state = {
     list: [],
     menuList: [],
-    tabList:[],
-    isFinish:true
+    load: false
   }
   componentDidMount() {
     //初始化
     this.init()
-    this.getTab()
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props.menuId && prevProps.menuId !== this.props.menuId) {
-      this.getTab()
-    }
   }
   init = async () => {
+    this.setState({
+      load: true
+    })
     let res = await this.http(this.url.menuList, {})
     if (res.success) {
       let cache = res.data.map(item => {
         if (item.url) {
+          item.url = item.url.replace('.jsp', '');
           item.url = item.url.replace(/(\/\w+)$/i, '');
+          item.url = '/' + item.url;
         }
         return item;
       });
       let list = menuFormat(cache);
       this.setState({
-        list: cache || [],
+        list: cache.filter(item => item.url) || [],
         menuList: list.map(item => {
           let its = menuIcons.find(menu => menu[item.menuName]);
           item.icon = its ? its[item.menuName] : 'setting';
@@ -56,24 +51,9 @@ class DefaultLayout extends Component {
         content: res.message
       })
     }
-  }
-
-  getTab = async () => {
-    let m = this.props.menuId;
     this.setState({
-      tabList: []
+      load: false
     })
-    if (m) {
-      let res = await this.http(this.url.pageTabList, {
-        menuId: m
-      })
-      if (res.success && res.data && res.data.length) {
-        let tabList = res.data.sort((pre, aft) => pre.tapId - aft.tapId) || [];
-        this.setState({
-          tabList: tabList
-        })
-      }
-    }
   }
   render() {
     return (
@@ -87,6 +67,7 @@ class DefaultLayout extends Component {
             className='sideMenuBox scrollbar'
             theme="light"
             collapsible
+            defaultCollapsed
           >
             <SideNav list={this.state.list} menuList={this.state.menuList} />
           </Sider>
@@ -99,25 +80,8 @@ class DefaultLayout extends Component {
               <Route
                 strict
                 path="/pages"
-                render={props => {
-                  let pathname = props.location.pathname;
-                  if (pathname && (/\/pages\/(\w*)\/*/.test(pathname)) && this.state.list && this.state.list.length && this.state.tabList && this.state.tabList.length) {
-                    let com = RegExp.$1;
-                    if (com && this.state.list.find(item => item.url === '/pages/' + com)) {
-                      //side权限路由过滤
-                      return <TabPage
-                        {...props}
-                        tabList={this.state.tabList}
-                        com={RegExp.$1}
-                        list={this.state.list}
-                      />
-                    } else {
-                      return <Redirect from="*" to="/404" />
-                    }
-                  } else {
-                    return <Spin tip="加载中" />
-                  }
-                }}
+                render={props => (this.state.list && !this.state.load ?
+                <TabPage {...props} list={this.state.list}/> : <Spin tip="加载中" />)}
               />
               <Redirect from="*" to="/404" />
             </Switch>
@@ -127,5 +91,3 @@ class DefaultLayout extends Component {
     )
   }
 }
-
-export default DefaultLayout

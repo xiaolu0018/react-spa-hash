@@ -10,36 +10,35 @@ import AuthRoute from '@/components/AuthRoute.js'
 
 import tabRoute from './tabRoute.js'
 
-@connect(state => ({ menuId: state.menu.menuId }), { setTap })
+@connect(state => ({ menuId: state.menu.menuId, tapId: state.menu.tapId }), { setTap })
 class TabPage extends PureComponent {
   constructor(props) {
     super(props)
     //list 菜单路由，com 当前tab页面
     this.state = {
       actTab: '',
-      actUrl: ''
+      actUrl: '',
+      tabList: [],
+      provList: [],
+      load: false,//Page load
     }
   }
   componentDidMount() {
-    this.init()
+    this.getTab()
   }
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.menuId !== this.props.menuId && this.props.menuId) {
-      this.init()
-    } else if (this.props.com && this.props.com === prevProps.com && prevProps.location.pathname !== this.props.location.pathname) {
-      let tabPath = '/pages/' + this.props.com + '/';
-      if (this.props.location.pathname.includes(tabPath) && prevProps.location.pathname.includes(tabPath)) {
-        //tab路由跳转切换
-        let tabList = this.props.tabList;
-        let path = this.props.history.location.pathname;
-        let tab = tabList.find(item => path && item.url === path);
-        if (tab) {
-          this.props.setTap(tab.tapId.toString());
-          this.setState({
-            actTab: tab.tapId.toString(),
-            actUrl: tab.url
-          })
+    if (this.props.menuId) {
+      if (this.props.menuId !== prevProps.menuId) {
+        this.getTab()
+      }else{
+        let regs = /\/pages\/w*\/(\w*)/;
+        if(!regs.test(this.props.location.pathname)){
+          //菜单重复点击
+          this.init()
         }
+      }
+      if(this.props.tapId && this.props.tapId !== prevProps.tapId){
+        this.getPageProv()
       }
     }
   }
@@ -49,8 +48,8 @@ class TabPage extends PureComponent {
   init = () => {
     let path = this.props.history.location.pathname;
     let actTab, actUrl;
-    if (this.props.tabList && this.props.tabList.length) {
-      let tabList = this.props.tabList;
+    if (this.state.tabList.length) {
+      let tabList = this.state.tabList;
       let tab = tabList.find(item => path && item.url === path);
       actTab = tab ? tab.tapId.toString() : tabList[0].tapId.toString();
       actUrl = tab ? tab.url : tabList[0].url;
@@ -58,14 +57,13 @@ class TabPage extends PureComponent {
       actTab = '';
       actUrl = '';
     }
-
+    actTab && this.props.setTap(actTab);
     this.setState(
       {
         actTab: actTab,
         actUrl: actUrl
       },
       function () {
-        this.state.actTab && this.changeTab(this.state.actTab);
         if (
           this.state.actTab &&
           this.state.actUrl !== this.props.location.pathname &&
@@ -77,6 +75,49 @@ class TabPage extends PureComponent {
         }
       }
     )
+  }
+  getTab = async () => {//tab路由
+    let m = this.props.menuId;
+    this.setState({
+      tabList: [],
+      load: true
+    })
+    if (m) {
+      let res = await this.http(this.url.pageTabList, {
+        menuId: m
+      })
+      if (res.success && res.data && res.data.length) {
+        let tabList = res.data.sort((pre, aft) => pre.tapId - aft.tapId) || [];
+        this.setState({
+          tabList: tabList.map(item => {
+            if (item.url) {
+              item.url = item.url.replace('.jsp', '')
+              item.url = '/' + item.url
+            }
+            return item;
+          })
+        })
+      }
+    }
+    this.init()
+    this.setState({
+      load: false
+    })
+  }
+  getPageProv = async () => {//页面接口权限
+    if (this.props.menuId && this.props.tapId) {
+      let res = await this.http(this.url.pageAuthList, {
+        menuId: this.props.menuId,
+        tapId: this.props.tapId
+      });
+      let provList = [];
+      if (res.success && res.data) {
+        let data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+        provList = data.otherButton ? data.otherButton : [];
+        provList = data.gridButton ? provList.concat(data.gridButton) : provList;
+      }
+      this.setState({ provList })
+    }
   }
   changeTab = activeKey => {
     this.props.setTap(activeKey);
@@ -94,7 +135,7 @@ class TabPage extends PureComponent {
           onChange={this.changeTab}
           className="link-tab"
         >
-          {this.props.tabList.map((item, index) => (
+          {this.state.tabList.map((item, index) => (
             <TabPane
               tab={
                 <Link
@@ -116,22 +157,28 @@ class TabPage extends PureComponent {
         >
           <Switch>
             <Route
+              exact
               strict
-              path={"/pages/" + this.props.com}
+              path={this.props.list.map(item => item.url)}
+              name="load-router"
+            >
+              <Spin tip="加载中" />
+            </Route>
+            <Route
+              strict
+              path={this.props.list.map(item => item.url + '/')}
+              name='page-router'
               render={props => {
-                let pathname = props.location.pathname;
-                let regs = new RegExp('\\/pages\\/' + this.props.com + '\\/(\\w*)');
-                let menuId = this.props.menuId;
-                let menu = this.props.list.filter(item => +item.menuId === +menuId && pathname.includes(item.url))
-                if (pathname && (regs.test(pathname)) && RegExp.$1 && this.props.tabList && this.props.tabList.length && +this.props.tabList[0].menuId === +this.props.menuId && menu.length) {
+                if (this.state.tabList.length && !this.state.load && props.location.pathname === this.state.actUrl) {
                   return (
                     <Switch>
-                      {tabRoute.map(item => <AuthRoute
-                        key={item.path}
-                        provList={this.props.tabList}
-                        path={item.path}
-                        render={props => <item.component {...props} />}
-                      />
+                      {tabRoute.map(item =>
+                        <AuthRoute
+                          key={item.path}
+                          path={item.path}
+                          provList={this.state.tabList}
+                          render={props => <item.component {...props} provList={this.state.provList} />}
+                        />
                       )}
                       <Redirect from="*" to="/404" />
                     </Switch>
