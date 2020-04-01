@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { HashRouter, Route, Switch, Redirect } from 'react-router-dom'
+import { HashRouter , Route, Switch, Redirect } from 'react-router-dom'
 import loadable from '@/components/loadable.js'
 // import AuthRoute from '@/components/AuthRoute.js'
 

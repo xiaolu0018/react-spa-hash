@@ -8,7 +8,6 @@ import RouterWrap from '@/router/index.js'
 import { Provider } from 'react-redux'
 import store from '@/store/store.js'
 import { saveUser, clearUser } from './store/user/action'
-
 import { createHashHistory } from 'history'
 
 class App extends Component {

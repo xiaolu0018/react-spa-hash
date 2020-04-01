@@ -4,13 +4,13 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
 import { Switch, Redirect, Route, Link } from 'react-router-dom'
-import { Tabs, Spin } from 'antd'
-import { setTap } from '@/store/menu/action.js'
+import { Tabs, Result, Button, Spin } from 'antd'
+import { setMenu, setTap } from '@/store/menu/action.js'
 import AuthRoute from '@/components/AuthRoute.js'
 
 import tabRoute from './tabRoute.js'
 
-@connect(state => ({ menuId: state.menu.menuId, tapId: state.menu.tapId }), { setTap })
+@connect(state => ({ menuId: state.menu.menuId, tapId: state.menu.tapId }), { setMenu, setTap })
 class TabPage extends PureComponent {
   constructor(props) {
     super(props)
@@ -21,7 +21,13 @@ class TabPage extends PureComponent {
       tabList: [],
       provList: [],
       load: false,//Page load
+      hasError: false
     }
+  }
+  static getDerivedStateFromError(error) {
+    // 更新 state 使下一次渲染可以显降级 UI
+    console.log(error)
+    return { hasError: true };
   }
   componentDidMount() {
     this.getTab()
@@ -30,24 +36,29 @@ class TabPage extends PureComponent {
     if (this.props.menuId) {
       if (this.props.menuId !== prevProps.menuId) {
         this.getTab()
-      }else{
+      } else {
         let regs = /\/pages\/w*\/(\w*)/;
-        if(!regs.test(this.props.location.pathname)){
+        if (!regs.test(this.props.location.pathname)) {
           //菜单重复点击
           this.init()
         }
       }
-      if(this.props.tapId && this.props.tapId !== prevProps.tapId){
+      if (this.props.tapId && this.props.tapId !== prevProps.tapId) {
         this.getPageProv()
       }
     }
   }
   componentWillUnmount() {
+    this.props.setMenu(null);
+    this.props.setTap(null);
     this.setState = () => { }
   }
   init = () => {
     let path = this.props.history.location.pathname;
     let actTab, actUrl;
+    this.setState({
+      hasError: false
+    })
     if (this.state.tabList.length) {
       let tabList = this.state.tabList;
       let tab = tabList.find(item => path && item.url === path);
@@ -69,33 +80,25 @@ class TabPage extends PureComponent {
           this.state.actUrl !== this.props.location.pathname &&
           this.state.actUrl.includes(this.props.location.pathname)
         ) {
-          this.props.history.replace({
-            pathname: this.state.actUrl
-          })
+          this.props.history.replace(this.state.actUrl)
         }
       }
     )
   }
-  getTab = async () => {//tab路由
+  getTab = async () => {
     let m = this.props.menuId;
     this.setState({
       tabList: [],
-      load: true
+      load: true,
+      hasError: false
     })
     if (m) {
       let res = await this.http(this.url.pageTabList, {
         menuId: m
       })
       if (res.success && res.data && res.data.length) {
-        let tabList = res.data.sort((pre, aft) => pre.tapId - aft.tapId) || [];
         this.setState({
-          tabList: tabList.map(item => {
-            if (item.url) {
-              item.url = item.url.replace('.jsp', '')
-              item.url = '/' + item.url
-            }
-            return item;
-          })
+          tabList: res.data.sort((pre, aft) => pre.tapId - aft.tapId) || []
         })
       }
     }
@@ -104,7 +107,7 @@ class TabPage extends PureComponent {
       load: false
     })
   }
-  getPageProv = async () => {//页面接口权限
+  getPageProv = async () => {
     if (this.props.menuId && this.props.tapId) {
       let res = await this.http(this.url.pageAuthList, {
         menuId: this.props.menuId,
@@ -113,8 +116,7 @@ class TabPage extends PureComponent {
       let provList = [];
       if (res.success && res.data) {
         let data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-        provList = data.otherButton ? data.otherButton : [];
-        provList = data.gridButton ? provList.concat(data.gridButton) : provList;
+        provList = [...(data.otherButton || []), ...(data.gridButton || [])];
       }
       this.setState({ provList })
     }
@@ -122,7 +124,8 @@ class TabPage extends PureComponent {
   changeTab = activeKey => {
     this.props.setTap(activeKey);
     this.setState({
-      actTab: activeKey
+      actTab: activeKey,
+      hasError: false
     })
   }
   render() {
@@ -155,41 +158,53 @@ class TabPage extends PureComponent {
           className="tab-pane scrollbar"
           style={{ height: 'calc(100% - 40px)' }}
         >
-          <Switch>
-            <Route
-              exact
-              strict
-              path={this.props.list.map(item => item.url)}
-              name="load-router"
-            >
-              <Spin tip="加载中" />
-            </Route>
-            <Route
-              strict
-              path={this.props.list.map(item => item.url + '/')}
-              name='page-router'
-              render={props => {
-                if (this.state.tabList.length && !this.state.load && props.location.pathname === this.state.actUrl) {
-                  return (
-                    <Switch>
-                      {tabRoute.map(item =>
-                        <AuthRoute
-                          key={item.path}
-                          path={item.path}
-                          provList={this.state.tabList}
-                          render={props => <item.component {...props} provList={this.state.provList} />}
-                        />
-                      )}
-                      <Redirect from="*" to="/404" />
-                    </Switch>
-                  )
-                } else {
-                  return <Spin tip="加载中" />
+          {
+            this.state.hasError
+              ?
+              <Result
+                status="warning"
+                title="数据异常，正在处理."
+                extra={
+                  <Button type="primary"><Link to={{ pathname: "/" }}>返回首页</Link></Button>
                 }
-              }}
-            />
-            <Redirect from="*" to="/404" />
-          </Switch>
+              />
+              :
+              <Switch>
+                <Route
+                  exact
+                  strict
+                  path={this.props.list.map(item => item.url)}
+                  name="load-router"
+                >
+                  <Spin tip="加载中" />
+                </Route>
+                <Route
+                  strict
+                  path={this.props.list.map(item => item.url + '/')}
+                  name='page-router'
+                  render={props => {
+                    if (this.state.tabList.length && !this.state.load && props.location.pathname === this.state.actUrl) {
+                      return (
+                        <Switch>
+                          {tabRoute.map(item =>
+                            <AuthRoute
+                              key={item.path}
+                              path={item.path}
+                              provList={this.state.tabList}
+                              render={props => <item.component {...props} provList={this.state.provList} />}
+                            />
+                          )}
+                          <Redirect from="*" to="404" />
+                        </Switch>
+                      )
+                    } else {
+                      return <Spin tip="加载中" />
+                    }
+                  }}
+                />
+                <Redirect from="*" to="/404" />
+              </Switch>
+          }
         </div>
       </div>
     )

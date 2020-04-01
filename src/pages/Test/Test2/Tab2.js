@@ -1,11 +1,9 @@
 import React, { Component } from "react";
+import { Link } from 'react-router-dom'
 import {
   Button
 } from "antd";
-import pageProv from "@/components/pageProv.js";
-
-@pageProv
-class Tab2 extends Component {
+export default class Tab2 extends Component {
   constructor(props) {
     super(props)
   }
@@ -16,7 +14,8 @@ class Tab2 extends Component {
 
   }
   render() {
-    return <Button>tab2页面</Button>
+    return <Button>
+      <Link to={'/pages/test1/tab'}>Tab2页面，go to test1-tab1</Link>
+    </Button>
   }
 }
-export default Tab2;

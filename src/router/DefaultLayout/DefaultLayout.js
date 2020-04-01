@@ -29,13 +29,11 @@ export default class DefaultLayout extends Component {
     let res = await this.http(this.url.menuList, {})
     if (res.success) {
       let cache = res.data.map(item => {
-        if (item.url) {
-          item.url = item.url.replace('.jsp', '');
+        if(item.url){
           item.url = item.url.replace(/(\/\w+)$/i, '');
-          item.url = '/' + item.url;
         }
         return item;
-      });
+      })
       let list = menuFormat(cache);
       this.setState({
         list: cache.filter(item => item.url) || [],
@@ -67,7 +65,6 @@ export default class DefaultLayout extends Component {
             className='sideMenuBox scrollbar'
             theme="light"
             collapsible
-            defaultCollapsed
           >
             <SideNav list={this.state.list} menuList={this.state.menuList} />
           </Sider>

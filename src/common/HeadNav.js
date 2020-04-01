@@ -25,13 +25,13 @@ class HeadNav extends Component {
           <div className="nav-logo-wrap">
             <h1>
               <Link to="/">
-                <img src="" alt="react"/>
+                <img src={require('@/assets/img/logo.jpg')} alt="react"/>
               </Link>
             </h1>
           </div>
           <div className="nav-info-wrap">
             你好，{this.props.user ? this.props.user : ' '}
-            <i onClick={this.loginOut} className="login-out">退出系统</i>
+            <i onClick={this.loginOut} className="login-out">退出</i>
           </div>
         </div>
       </div>

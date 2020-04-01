@@ -3,11 +3,10 @@ import {
   Table,
   Button
 } from "antd";
-import pageProv from "@/components/pageProv.js";
 import provCom from '@/components/ProvCom.js';
 
-@pageProv
-class Tab1 extends Component {
+
+export default class Tab1 extends Component {
   constructor(props) {
     super(props)
     this.state = {
@@ -127,4 +126,3 @@ class Tab1 extends Component {
       }} />
   }
 }
-export default Tab1;
