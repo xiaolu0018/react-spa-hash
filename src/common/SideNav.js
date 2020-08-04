@@ -28,7 +28,16 @@ class SideNav extends Component {
   }
   setAct = () => {
     let url = this.props.history.location.pathname
-    let menu = this.props.list.find(item => item.url && url.includes(item.url));
+    let reg = /\/[^\/]+\/([^\/]+)/i;
+    let menu = this.props.list.find(item => {
+      if(item.url){
+        let n = reg.exec(item.url);
+        let m = reg.exec(url);
+        return n && m && n[1] === m[1];
+      }else{
+        return false;
+      }
+    });
     let menuId = menu ? menu.menuId.toString() : null;
     if (menuId && menuId !== this.state.current) {
       this.props.setMenu(menuId)
